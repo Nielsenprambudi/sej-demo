@@ -1,16 +1,15 @@
-import React, {useEffect, useState} from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import {getCategories, getBooks} from './storing/actions/category';
+import {useState} from 'react';
+import { useSelector } from 'react-redux';
 import {Layout, Typography, Row, Col, 
   Input, Select, Table, Divider,
-  Image, Button
+  Image, Button, Tooltip, Card,
+  Empty
 } from 'antd';
 import ReactModal from 'react-modal';
 import { UnorderedListOutlined } from '@ant-design/icons'; 
-const {Header, Footer, Content} = Layout;
-const {Title, Paragraph, Text} = Typography;
-const {Search} = Input;
-const {Option} = Select;
+import { useMediaQuery } from 'react-responsive';
+const {Content} = Layout;
+const {Title, Paragraph} = Typography;
 
 type detailbook = {
   title?: string,
@@ -20,31 +19,41 @@ type detailbook = {
   sections?: any
 }
 
-const Demo = () => {
-  const dispatch = useDispatch();
-  const [search, setSearch] = useState('');
-  const [data, setData] = useState([]);
-  const {isLoadingCat, isCat, 
-    isErrorCat, cats,
-    isLoadingBook, isBook,
-    isErrorBook, books,
-    size, page
+const Bookmarks = () => {
+  const mobileVersion = useMediaQuery({ maxWidth: 767})
+  const {bookmarkAdd
   } = useSelector((state: any) => state.config);
-  const [selectCat, setSelectCat] = useState('');
-  const [idCat, setIdCat] = useState('');
   const [detail, setDetail] = useState({} as detailbook);
   const [open, setOpen] = useState(false);
   const columns = [
     {
-      title: 'Number',
+      title: 'Id',
       dataIndex: 'id',
       key: 'id',
-      render: (id: number) => <div>{id + 1}</div>
+      render: (id: number) => <div>{id + 1}</div>,
     },
     {
       title: 'Title',
       dataIndex: 'title',
       key: 'title',
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (title: string) => (
+        <Tooltip placement='topLeft' title={title}>
+          {title}
+        </Tooltip>
+      )
+    },
+    {
+      title: 'Authors',
+      dataIndex: 'authors',
+      key: 'authors',
+      render: (authors: any) => (
+          authors.map((item: string, i: number) => (
+            <Paragraph key={i}>{item}</Paragraph>
+          ))
+      )
     },
     {
       title: 'Covers',
@@ -52,7 +61,7 @@ const Demo = () => {
       key: 'cover_url',
       render: (img: string) => <div>
         <Image
-          width={100}
+          width={50}
           src={img}
         />
       </div>
@@ -61,16 +70,16 @@ const Demo = () => {
       title: 'Action',
       key: 'action',
       render: (record: any) => 
-        <Button onClick={() => openRecord(record)}>
-          <UnorderedListOutlined />
-        </Button>
+        <Tooltip placement='topLeft' title={"Book Detail"}>
+          <Button onClick={() => openRecord(record)}>
+            <UnorderedListOutlined />
+          </Button>
+        </Tooltip>
       
     }
   ]
 
-  const searchingBook = (e: string) => {
-    setSearch(e);
-  };
+  
 
   const openRecord = (rec: any) => {
     setDetail(
@@ -79,33 +88,11 @@ const Demo = () => {
     setOpen(true);
   }
 
-  const onChangeCat = (val: string) => {
-    const parsing = JSON.parse(val);
-    setSelectCat(parsing.name);
-    setIdCat(parsing.id);
-    dispatch(getBooks({
-      catId: parsing.id,
-      page: 0,
-      size: 10
-    }))
-  }
-
+  
   const onCloseModal = () => {
     setOpen(false);
     setDetail({});
   };
-
-  const onChangePage = (currentp: number, sizep: number) => {
-    dispatch(getBooks({
-      catId: idCat,
-      page: currentp,
-      size: sizep
-    }))
-  }
-
-  useEffect(() => {
-    dispatch(getCategories())
-  }, [dispatch])
 
   return (
       <Layout>
@@ -167,56 +154,57 @@ const Demo = () => {
             </Row>
           </div>
         </ReactModal>
-        <Header>
-          <Title style={{color: '#FFFFFF'}}>SEJ Demo</Title>
-        </Header>
         <Layout className='layoutwrapper'>
           <Content>
             <div className='layoutcontent'>
-              <Row gutter={[16, 16]}>
-                <Col className='gutter-row' xs={24} sm={24} md={12} lg={12}>
-                  <Search 
-                    placeholder='Search by Author or Title of the books' 
-                    value={search} 
-                    onChange={(e) => searchingBook(e.target.value)}
-                    enterButton
-                  />
-                </Col>
-                <Col className='gutter-row' xs={24} sm={24} md={12} lg={12}>
-                  <Select value={selectCat} style={{width: '100%'}} onChange={onChangeCat}  placeholder="Select Category" loading={isLoadingCat}>
+              {
+                !mobileVersion ?
+                <Table
+                  columns={columns}
+                  dataSource={bookmarkAdd}           
+                /> :
+                (
+                  <div>
                     {
-                      isCat &&
-                      cats.map((item: any, i: number) => (
-                        <Option value={JSON.stringify(item)}>{item?.name}</Option>
-                      ))
+                      bookmarkAdd.length > 0 ?
+                      bookmarkAdd.map((b: any, y: number) => (
+                        <div key={y}>
+                          <Card 
+                            title={b.title}
+                            actions={[
+                              <Tooltip placement='topLeft' title="Book Detail">
+                                <Button onClick={() => openRecord(b)}>
+                                  <UnorderedListOutlined /> Detail
+                                </Button>
+                              </Tooltip>
+                            ]}
+                            cover={<Image
+                              style={{padding: 15}}
+                              width={'100%'}
+                              src={b.cover_url}
+                            />}
+                          >
+                            <Title level={5} style={{fontWeight: 'bold'}}>Authors :</Title>
+                            {
+                              b.authors.map((booka: string, x: number) => (
+                                <Paragraph key={x}>
+                                  {booka}
+                                </Paragraph>
+                              ))
+                            }
+                          </Card>
+                        </div>
+                      )) :
+                      <Empty/>
                     }
-                  </Select>
-                </Col>
-              </Row>
-              <Divider/>
-              <Table
-                columns={columns}
-                dataSource={books}
-                loading={isLoadingBook}
-                pagination={{
-                  total: 50,
-                  defaultPageSize: size,
-                  defaultCurrent: page,
-                  showSizeChanger: true,
-                  pageSizeOptions: ['10', '20', '30'],
-                  onShowSizeChange: onChangePage,
-                }}              
-              />
+                  </div>
+                )
+              }
             </div>
           </Content>
         </Layout>
-        <Footer>
-          <Paragraph style={{textAlign: 'center', fontStyle: 'italic'}}>
-            Made by Nielsen Prambudi
-          </Paragraph>
-        </Footer>
       </Layout>
   );
 }
 
-export default Demo;
+export default Bookmarks;

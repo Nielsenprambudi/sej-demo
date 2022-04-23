@@ -1,4 +1,4 @@
-import {CATEGORIES, BOOKS} from './actionType'
+import {CATEGORIES, BOOKS, BOOKMARK, SEARCHING, CLEARBOOKS} from './actionType'
 import http from "../../core/http";
 
 export const getCategories = () =>  {
@@ -12,5 +12,25 @@ export const getBooks = (payload: any) => {
     return {
         type: BOOKS,
         payload: http.get(`fee-assessment-books?categoryId=${payload.catId}&page=${payload.page}&size=${payload.size}`)
+    }
+}
+
+export const addBookmarks = (object: any) => {
+    return {
+        type: BOOKMARK,
+        payload: object
+    }
+}
+
+export const searchBooks = (value: string) => {
+    return {
+        type: SEARCHING,
+        payload: value
+    }
+}
+
+export const clearBooks = () => {
+    return {
+        type: CLEARBOOKS,
     }
 }

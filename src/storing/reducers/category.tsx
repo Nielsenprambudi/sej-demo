@@ -1,21 +1,4 @@
-// import { createSlice } from "@reduxjs/toolkit";
-
-// export const categoryReducer = createSlice({
-//     name: "category",
-//     initialState: [],
-//     reducers: {
-//         getCategory: (state, action) => {
-//             state = {...action.payload};
-//             return state;
-//         }
-//     }
-// });
-
-// const {reducer, actions} = categoryReducer;
-// export const {getCategory} = actions;
-// export default reducer;
-
-import { CATEGORIES, BOOKS } from "../actions/actionType";
+import { CATEGORIES, BOOKS, BOOKMARK, SEARCHING, CLEARBOOKS } from "../actions/actionType";
 
 const initialState = {
     isLoadingCat: false,
@@ -26,6 +9,7 @@ const initialState = {
     isErrorBook: false,
     isBook: false,
     books: [],
+    bookmarkAdd: [],
     size: 10,
     page: 0
 };
@@ -76,6 +60,40 @@ const reducer = (state = initialState, action: any) => {
                 isErrorBook: false,
                 isBook: true,
                 books: action.payload.data
+            }
+        }
+        case SEARCHING: {
+            const emptydata: any = [];
+            state.books.forEach((item: any) => {
+                if(item.title.toLowerCase().includes(action.payload.toLowerCase())) {
+                    emptydata.push(item);
+                } else {
+                    item.authors.forEach((a: string) => {
+                        if(a.toLowerCase().includes(action.payload.toLowerCase())) {
+                            emptydata.push(item);
+                        }
+                    })
+                }
+                
+            })
+            return {
+                ...state,
+                books: emptydata
+            }
+        }
+        case BOOKMARK: {
+            return {
+                ...state,
+                bookmarkAdd: [...state.bookmarkAdd, action.payload]
+            }
+        }
+        case CLEARBOOKS: {
+            return {
+                ...state,
+                isLoadingBook: false,
+                isErrorBook: false,
+                isBook: false,
+                books: []
             }
         }
         default:
